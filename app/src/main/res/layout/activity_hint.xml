@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".HintActivity">
+
+    <TextView
+        android:id="@+id/main_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:text="Подсказка по составлению команд"
+        />
+
+    <ScrollView
+        android:layout_width="390dp"
+        android:layout_height="600dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="
+\nГенератор тестовых данных для таблицы базы данных
+\n
+\nПараметры
+\n
+\n-n / --names: Названия атрибутов, которые будут созданы.
+\n-t / --types: Типы соответствующих атрибутов.
+\n-l / --language: Язык, на котором будет производиться генерация данных.
+\n-k / --number: Количество кортежей (строк) в таблице.
+\n-b / --blank: Процент пустых данных.
+\n
+\n-------------------------------
+\nЕсть следующие типы аттрибутов:
+\nname_first - только имя;
+\nname_last - только фамилия;
+\nname_patronymic - отчество/среднее имя в зависимости от языка;
+\nname_first_patronymic_last - пример совмещения для получения полного имени;
+\nname или name_full - другой вариант полного имени;
+\n-------------------------------
+\nplace_country - страна;
+\nplace_city - город;
+\nplace_street - название улицы;
+\nplace_num_n1_n2 - случайный номер улицы от n1 до n2;
+\nplace_country_city_street_num_n1_n2 - пример совмещения для получения полного названия;
+\nplace или place_full - другой вариант полного названия;
+\n-------------------------------
+\nemail - электронная почта с разными случайными доменами;
+\nemail_@mail.ru - адрес почты заканчивается на домен @mail.ru
+\n-------------------------------
+\ndate - дата от 01.01.2000 до 12.12.2010;
+\ndate_dd.mm.yyyy_dd.mm.yyyy - дата от dd.mm.yyyy до dd.mm.yyyy;
+\n-------------------------------
+\nphone - телефон со всеми случайными значениями;
+\nphone_c_r_r - телефон, где c - код страны, код региона - случайный;
+\nphone_r_a_r - телефон, где a - код зоны, код страны - случайный;
+\nphone_r_r_n - телефон, n - кол-во цифр после кодов, коды - случайный;
+\nphone_r_r_r - телефон со всеми случайными значениями;
+\nphone_c_a_n - телефон, где:
+\n                c - код страны
+\n                a - код зоны
+\n                n - кол-во цифр после кодов;
+\n-------------------------------
+\ngender - пол в виде F/M или М/Ж;
+\ngender_full - пол в виде Female/Male или Мужчина/Женщина
+\n-------------------------------
+\nanimal_name - кличка животного;
+\nanimal_species - вид животного;
+\n------------------------------
+\ncar_brand - марка авто;
+\ncar_number - номер авто;
+\n-------------------------------
+\neducation - место образования;
+\noccupation - место работы;
+\n-------------------------------
+\ncolor - цвет;
+\n-------------------------------
+\nint - целое число от 0 до 100;
+\nint_n1_n2 - целое число от n1 до n2;
+18:30
+
+
+float - нецелое число от 0 до 1;
+\nfloat_n1_n2 - нецелое число от n1 до n2;
+\nboolean - логика true/false, true появляется в 50% случаях
+\nboolean_pr - логика true/false, true появляется в pr% случаях
+\nstring - случайная надпись длиной от 10 до 20
+\nstring_n1_n2 - случайная надпись длиной от n1 до n2
+\n-------------------------------
+\n
+\nПример:
+\n
+\n-n Username HomeAddress Email BirthDate PhoneNumber Gender Education Occupation Height Weight Sala
+ry Is_Maried ID -t name_first_last place_street_num_0_20 email_@mail.ru date_1.1.1980_29.12.2000 phone_7_r_7 gender_full education occupation int_150_200 int_50_
+90 int_20000_300000 boolean_60 string_10_10 -l eng -k 100000 -b 0" />
+    </ScrollView>
+
+    <Button
+        android:id="@+id/link_to_gen"
+        android:layout_width="260dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="10dp"
+        android:textSize="20sp"
+        android:backgroundTint="@color/black"
+        android:text="Назад"
+        />
+
+</LinearLayout>
