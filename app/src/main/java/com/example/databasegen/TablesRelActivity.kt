@@ -13,6 +13,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import org.json.JSONObject
 
 class TablesRelActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,12 +34,35 @@ class TablesRelActivity : AppCompatActivity() {
         val button: Button = findViewById(R.id.button_gen)
         val linkToMenu: Button = findViewById(R.id.link_to_menu)
 
+        val currentUser = getUsername(this)
 
-        //TODO Добавить загрузку с сервера
-        val listItemsOne = listOf("Табица 1", "Табица 2", "Табица 3")
-        val arrayAdapterOne = ArrayAdapter(this, android.R.layout.simple_spinner_item, listItemsOne)
-        arrayAdapterOne.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerOne.adapter = arrayAdapterOne
+        var selectedTable1 = "None"
+        var selectedTable2 = "None"
+        var selectedRel = "one_one"
+
+        commandAPI("ls users/${currentUser}/feather/") { successls, resultls ->
+            if (successls) {
+                val jsonObject = JSONObject(resultls)
+                val outputString = jsonObject.getString("output")
+                val outputList = outputString.split("\n").filter { it.isNotEmpty() }
+                val cleanedList = outputList.map { it.removeSuffix(".feather") }
+
+                runOnUiThread {
+                    val arrayAdapterOne = ArrayAdapter(this, android.R.layout.simple_spinner_item, cleanedList)
+                    arrayAdapterOne.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                    spinnerOne.adapter = arrayAdapterOne
+
+                    val arrayAdapterTwo = ArrayAdapter(this, android.R.layout.simple_spinner_item, cleanedList)
+                    arrayAdapterTwo.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                    spinnerTwo.adapter = arrayAdapterTwo
+                }
+
+            } else {
+                runOnUiThread {
+                    Toast.makeText(this@TablesRelActivity, "Ошибка сервера", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
 
         spinnerOne.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
@@ -48,19 +72,14 @@ class TablesRelActivity : AppCompatActivity() {
                 id: Long
             ) {
                 val selectedItem = parent.getItemAtPosition(position).toString()
-                Toast.makeText(this@TablesRelActivity, "Таблица \"$selectedItem\"", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@TablesRelActivity, "Таблица \"$selectedItem\"", Toast.LENGTH_SHORT).show()
+                selectedTable1 = selectedItem
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
 
             }
         }
-
-
-        val listItemsTwo = listOf("Табица 1", "Табица 2", "Табица 3")
-        val arrayAdapterTwo = ArrayAdapter(this, android.R.layout.simple_spinner_item, listItemsTwo)
-        arrayAdapterTwo.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerTwo.adapter = arrayAdapterTwo
 
         spinnerTwo.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
@@ -70,7 +89,8 @@ class TablesRelActivity : AppCompatActivity() {
                 id: Long
             ) {
                 val selectedItem = parent.getItemAtPosition(position).toString()
-                Toast.makeText(this@TablesRelActivity, "Таблица \"$selectedItem\"", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@TablesRelActivity, "Таблица \"$selectedItem\"", Toast.LENGTH_SHORT).show()
+                selectedTable2 = selectedItem
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -79,7 +99,7 @@ class TablesRelActivity : AppCompatActivity() {
         }
 
 
-        val listItemsRel = listOf("Один к одному", "Один ко многим", "Многие к одному", "Многие ко многим")
+        val listItemsRel = listOf("one_one", "one_many", "many_one", "many_many")
         val arrayAdapterRel = ArrayAdapter(this, android.R.layout.simple_spinner_item, listItemsRel)
         arrayAdapterRel.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerRel.adapter = arrayAdapterRel
@@ -92,7 +112,8 @@ class TablesRelActivity : AppCompatActivity() {
                 id: Long
             ) {
                 val selectedItem = parent.getItemAtPosition(position).toString()
-                Toast.makeText(this@TablesRelActivity, "Связь \"$selectedItem\"", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@TablesRelActivity, "Связь \"$selectedItem\"", Toast.LENGTH_SHORT).show()
+                selectedRel = selectedItem
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -100,23 +121,29 @@ class TablesRelActivity : AppCompatActivity() {
             }
         }
 
-
         linkToMenu.setOnClickListener {
             val intent = Intent(this, MenuActivity::class.java)
             startActivity(intent)
         }
 
-        //TODO Отправить запрос на сервер для генерации таблиц
         button.setOnClickListener {
             val name = nameText.text.toString().trim()
 
             if (name == "")
                 Toast.makeText(this, "Не все поля заполнены", Toast.LENGTH_LONG).show()
             else {
-                Toast.makeText(this, "Таблица $name сгенерирована", Toast.LENGTH_LONG).show()
+                commandAPI("python dbrel.py -f users/${currentUser}/feather/${selectedTable1}.feather -s users/${currentUser}/feather/${selectedTable2}.feather -o users/${currentUser}/feather/${name} -t $selectedRel -k 20") { success, _ ->
+                    if (success) {
+                        runOnUiThread {
+                            Toast.makeText(this, "Таблица $name создана", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        runOnUiThread {
+                            Toast.makeText(this, "Ошибка сервера", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
             }
-
         }
-
     }
 }

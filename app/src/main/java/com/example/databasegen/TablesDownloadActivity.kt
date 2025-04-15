@@ -6,13 +6,13 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
-import android.widget.EditText
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import org.json.JSONObject
 
 class TablesDownloadActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,12 +31,30 @@ class TablesDownloadActivity : AppCompatActivity() {
         val button: Button = findViewById(R.id.button_download)
         val linkToMenu: Button = findViewById(R.id.link_to_menu)
 
+        val currentUser = getUsername(this)
 
-        //TODO Добавить загрузку с сервера
-        val listItemsTables = listOf("Табица 1", "Табица 2", "Табица 3")
-        val arrayAdapterTables = ArrayAdapter(this, android.R.layout.simple_spinner_item, listItemsTables)
-        arrayAdapterTables.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerTable.adapter = arrayAdapterTables
+        var selectedTable = "None"
+        var selectedFormat = "csv"
+
+        commandAPI("ls users/${currentUser}/feather/") { successls, resultls ->
+            if (successls) {
+                val jsonObject = JSONObject(resultls)
+                val outputString = jsonObject.getString("output")
+                val outputList = outputString.split("\n").filter { it.isNotEmpty() }
+                val cleanedList = outputList.map { it.removeSuffix(".feather") }
+
+                runOnUiThread {
+                    val arrayAdapterTables = ArrayAdapter(this, android.R.layout.simple_spinner_item, cleanedList)
+                    arrayAdapterTables.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                    spinnerTable.adapter = arrayAdapterTables
+                }
+
+            } else {
+                runOnUiThread {
+                    Toast.makeText(this@TablesDownloadActivity, "Ошибка сервера", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
 
         spinnerTable.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
@@ -46,7 +64,8 @@ class TablesDownloadActivity : AppCompatActivity() {
                 id: Long
             ) {
                 val selectedItem = parent.getItemAtPosition(position).toString()
-                Toast.makeText(this@TablesDownloadActivity, "Таблица \"$selectedItem\"", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@TablesDownloadActivity, "Таблица \"$selectedItem\"", Toast.LENGTH_SHORT).show()
+                selectedTable = selectedItem
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -68,7 +87,8 @@ class TablesDownloadActivity : AppCompatActivity() {
                 id: Long
             ) {
                 val selectedItem = parent.getItemAtPosition(position).toString()
-                Toast.makeText(this@TablesDownloadActivity, "Таблица \"$selectedItem\"", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@TablesDownloadActivity, "Формат \"$selectedItem\"", Toast.LENGTH_SHORT).show()
+                selectedFormat = selectedItem
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -82,9 +102,31 @@ class TablesDownloadActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        //TODO Отправить запрос на сервер для загрузки таблицы
         button.setOnClickListener {
-            Toast.makeText(this, "Загрузка таблицы...", Toast.LENGTH_LONG).show()
+            commandAPI("python dbsaver.py -i users/${currentUser}/feather/${selectedTable}.feather -o saves -f $selectedFormat") { success, _ ->
+                if (success) {
+                    runOnUiThread {
+                        Toast.makeText(this, "Успешное создание $selectedTable в формате $selectedFormat", Toast.LENGTH_SHORT).show()
+                    }
+
+                    downloadFile("$selectedTable.$selectedFormat", this) { successDownload ->
+                        if (successDownload) {
+                            runOnUiThread {
+                                Toast.makeText(this, "Успешная загрузка $selectedTable в формате $selectedFormat", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            runOnUiThread {
+                                Toast.makeText(this, "Ошибка загрузки", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+
+                } else {
+                    runOnUiThread {
+                        Toast.makeText(this, "Ошибка сервера", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
 
     }

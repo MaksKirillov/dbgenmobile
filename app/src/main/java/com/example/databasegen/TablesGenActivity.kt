@@ -29,6 +29,8 @@ class TablesGenActivity : AppCompatActivity() {
         val button: Button = findViewById(R.id.button_gen)
         val linkToMenu: Button = findViewById(R.id.link_to_menu)
 
+        val currentUser = getUsername(this)
+
         linkToHint.setOnClickListener {
             val intent = Intent(this, HintActivity::class.java)
             startActivity(intent)
@@ -45,9 +47,19 @@ class TablesGenActivity : AppCompatActivity() {
             val command = commandText.text.toString().trim()
 
             if (name == "" || command == "")
-                Toast.makeText(this, "Не все поля заполнены", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Не все поля заполнены", Toast.LENGTH_SHORT).show()
             else {
-                Toast.makeText(this, "Таблица $name сгенерирована", Toast.LENGTH_LONG).show()
+                commandAPI("python dbgen.py $command -s users/${currentUser}/feather/${name}") {success, _ ->
+                    if (success) {
+                        runOnUiThread {
+                            Toast.makeText(this, "Таблица $name создана", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        runOnUiThread {
+                            Toast.makeText(this, "Ошибка сервера или неправильная команда", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
             }
 
         }

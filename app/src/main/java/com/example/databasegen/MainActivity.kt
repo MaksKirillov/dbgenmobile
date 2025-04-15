@@ -4,12 +4,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,27 +34,71 @@ class MainActivity : AppCompatActivity() {
         }
 
         button.setOnClickListener {
-            //APIhelper()
-
             val login = userLogin.text.toString().trim()
             val pass = userPass.text.toString().trim()
 
             if (login == "" || pass == "")
-                Toast.makeText(this, "Не все поля заполнены", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Не все поля заполнены", Toast.LENGTH_SHORT).show()
             else {
-                val user = User(login, pass)
+                commandAPI("ls users/") { successls, resultls ->
+                    if (successls) {
 
-                val db = DbHelper(this, null)
-                db.addUser(user)
-                Toast.makeText(this, "Пользователь $login добавлен", Toast.LENGTH_LONG).show()
+                        val jsonObject = JSONObject(resultls)
+                        val outputString = jsonObject.getString("output")
+                        val outputList = outputString.split("\n").filter { it.isNotEmpty() }
+
+                        if (login !in outputList) {
+                            commandAPI("mkdir users/${login}") { success, _ ->
+                                if (success) {
+                                    commandAPI("mkdir users/${login}/password") { success2, _ ->
+                                        if (success2) {
+                                            commandAPI("mkdir users/${login}/password/${pass}") { success3, _ ->
+                                                if (success3) {
+                                                    commandAPI("mkdir users/${login}/feather") { success4, _ ->
+                                                        if (success4) {
+                                                            runOnUiThread {
+                                                                Toast.makeText(this@MainActivity, "Пользователь $login зарегистрирован", Toast.LENGTH_SHORT).show()
+                                                            }
+                                                        } else {
+                                                            runOnUiThread {
+                                                                Toast.makeText(this@MainActivity, "Ошибка сервера", Toast.LENGTH_SHORT).show()
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    runOnUiThread {
+                                                        Toast.makeText(this@MainActivity, "Ошибка сервера", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            runOnUiThread {
+                                                Toast.makeText(this@MainActivity, "Ошибка сервера", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    runOnUiThread {
+                                        Toast.makeText(this@MainActivity, "Ошибка сервера", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        } else {
+                            runOnUiThread {
+                                Toast.makeText(this@MainActivity, "Данный пользователь уже существует", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        runOnUiThread {
+                            Toast.makeText(this@MainActivity, "Ошибка сервера", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
 
                 userLogin.text.clear()
                 userPass.text.clear()
 
             }
-
         }
-
-
     }
 }
